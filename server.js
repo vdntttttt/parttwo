@@ -1,8 +1,9 @@
-// server.js
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+// Use the dynamic port assigned by Render, or default to 3000 for local development
+const PORT = process.env.PORT || 3000; 
 
 app.use(cors());
 app.use(express.json());
