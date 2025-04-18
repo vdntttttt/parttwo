@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PartTwo - Find the Next Reel</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: white;
+      padding: 3rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 1rem;
+      font-size: 2rem;
+      color: #333;
+    }
+    input[type="text"] {
+      padding: 0.8rem;
+      width: 100%;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    button {
+      background-color: #5d5fef;
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #4a4ce0;
+    }
+    .result {
+      margin-top: 1.5rem;
+      font-size: 1rem;
+      color: #333;
+    }
+    .result a {
+      display: block;
+      margin: 0.5rem 0;
+      color: #5d5fef;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔎 Find Next Parts of Any Reel</h1>
+    <input type="text" id="reelInput" placeholder="Paste Reel link here" />
+    <button onclick="findParts()">Find All Parts</button>
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    window.onload = async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text.includes("instagram.com/reel/")) {
+          document.getElementById("reelInput").value = text;
+        }
+      } catch (err) {
+        console.log("Clipboard access denied or unavailable.");
+      }
+    };
+
+    async function findParts() {
+      const link = document.getElementById("reelInput").value;
+      const result = document.getElementById("result");
+
+      if (!link.includes("instagram.com/reel/")) {
+        result.textContent = "Please enter a valid Instagram Reel link.";
+        return;
+      }
+
+      result.innerHTML = "⏳ Searching for next parts...";
+
+      try {
+        const res = await fetch("http://localhost:3000/api/find-reels", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ reelLink: link })
+        });
+
+        if (!res.ok) {
+          throw new Error(`Server responded with ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        if (data.error || !data.reels || data.reels.length === 0) {
+          result.textContent = "Could not find any related Reels.";
+          return;
+        }
+
+        let html = `<strong>Next 5 Reels by this creator:</strong>`;
+        data.reels.forEach((url, index) => {
+          html += `<a href="${url}" target="_blank">Part ${index + 2}</a>`;
+        });
+
+        result.innerHTML = html;
+      } catch (error) {
+        console.error("Fetch error:", error);
+        result.textContent = "Could not connect to backend. Please ensure the server is running at http://localhost:3000.";
+      }
+    }
+  </script>
+</body>
+</html>
